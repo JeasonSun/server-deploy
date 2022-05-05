@@ -1,0 +1,12 @@
+{
+  "name": "simple-deploy",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "learn:nginx": "docker-compose -f learn-nginx.docker-compose.yaml up"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
