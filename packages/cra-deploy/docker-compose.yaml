@@ -1,8 +1,26 @@
 version: '3'
 services: 
   simple:
+    image: cra-deploy_simple
     build: 
       context: .
       dockerfile: simple.Dockerfile
     ports: 
       - 4000:80
+  route:
+    image: cra-deploy_route
+    build:
+      context: .
+      dockerfile: router.Dockerfile
+    ports: 
+      - 3000:80
+  oss:
+    build:
+      context: .
+      dockerfile: oss.Dockerfile
+      args:
+        - ACCESS_KEY_ID
+        - ACCESS_KEY_SECRET
+        - ENDPOINT=oss-cn.aliyuncs.com
+    ports:
+      - 8000:80
