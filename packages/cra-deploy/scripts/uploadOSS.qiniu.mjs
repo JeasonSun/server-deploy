@@ -7,21 +7,19 @@ import { fileURLToPath } from "url";
 import qiniu from "qiniu";
 import readdirp from "readdirp";
 import PQueue from "p-queue";
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 
 /**
  * 配置环境变量
  */
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const dotenvPath = resolve(__dirname, "../.env/.env.development.local");
-if(existsSync(dotenvPath)){
+if (existsSync(dotenvPath)) {
   dotenv.config({
-    path: dotenvPath
+    path: dotenvPath,
   });
-
-  console.log(process.env.ACCESS_KEY_ID)
+  // console.log(process.env.ACCESS_KEY_ID);
 }
-
 
 const accessKey = process.env.ACCESS_KEY_ID;
 const secretKey = process.env.ACCESS_KEY_SECRET;
@@ -35,7 +33,6 @@ const putPolicy = new qiniu.rs.PutPolicy(options);
 const uploadToken = putPolicy.uploadToken(mac);
 const config = new qiniu.conf.Config();
 const formUploader = new qiniu.form_up.FormUploader(config);
-const putExtra = new qiniu.form_up.PutExtra();
 
 const queue = new PQueue({
   concurrency: 10,
@@ -63,22 +60,21 @@ async function uploadFile(objectName, withHash = false) {
   const file = resolve("./build", objectName);
   // 如果路径名称不带有 hash 值，则直接判断在 OSS 中不存在该文件名，需要重新上传
   // const exist = withHash ? await isExistObject(objectName) : false;
-  const exist = false;
 
-  if (!exist) {
-    // const cacheControl = withHash ? "max-age=31536000" : "no-cache";
-    // 为了加速传输速度， 这里使用 stream
+  // if (!exist) {
+  // const cacheControl = withHash ? "max-age=31536000" : "no-cache";
+  // 为了加速传输速度， 这里使用 stream
 
-    try {
-      await uploadPromise(objectName, file);
-      console.log(`Done: ${objectName}`);
-    } catch (error) {
-      console.log(`Error`, error);
-    }
-  } else {
-    // 如果该文件在 OSS 已经存在，则跳过该文件 (Object);
-    console.log(`Skip: ${objectName}`);
+  try {
+    await uploadPromise(objectName, file);
+    console.log(`Done: ${objectName}`);
+  } catch (error) {
+    console.log(`Error`, error);
   }
+  // } else {
+  // 如果该文件在 OSS 已经存在，则跳过该文件 (Object);
+  // console.log(`Skip: ${objectName}`);
+  // }
 }
 async function uploadPromise(fileName, file) {
   // formUploader.putStream(objectName, createReadStream(file), {
@@ -86,7 +82,10 @@ async function uploadPromise(fileName, file) {
   //     "Cache-Control": cacheControl,
   //   },
   // });
-  console.log('~', fileName)
+
+  // 七牛中不能通过SDK修改资源的Cache-Control，只能在CDN域名配置中修改自定义配置。
+  // https://developer.qiniu.com/fusion/4944/cache-configuration
+  const putExtra = new qiniu.form_up.PutExtra();
   const readableStream = createReadStream(file);
   return new Promise((resolve, reject) => {
     formUploader.putStream(
@@ -104,11 +103,8 @@ async function uploadPromise(fileName, file) {
           });
         }
         if (respInfo.statusCode === 200) {
-          console.log(respBody);
           return resolve(respBody);
         } else {
-          console.log(respInfo.statusCode);
-          console.log(respBody);
           return reject({
             code: respInfo.statusCode,
             data: respBody,
@@ -126,9 +122,9 @@ async function main() {
   }
 
   // 上传携带 hash 的文件
-  // for await (const entry of readdirp("./build/static", { type: "files" })) {
-  //   queue.add(() => uploadFile(`static/${entry.path}`, true));
-  // }
+  for await (const entry of readdirp("./build/static", { type: "files" })) {
+    queue.add(() => uploadFile(`static/${entry.path}`, true));
+  }
 }
 
 main().catch((e) => {
