@@ -21,6 +21,6 @@ services:
       args:
         - ACCESS_KEY_ID
         - ACCESS_KEY_SECRET
-        - ENDPOINT=oss-cn.aliyuncs.com
+        - OSS_BUCKET
     ports:
       - 8000:80
