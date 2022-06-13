@@ -1,0 +1,28 @@
+version: '3'
+services:
+  api:
+    image: shanyue/whoami
+    ports:
+      - 8888:3000
+  nginx:
+    image: nginx:alpine
+    ports:
+      - 8000:80
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - .:/usr/share/nginx/html
+  location:
+    image: nginx:alpine
+    ports:
+      - 8100:80
+    volumes:
+      - ./location.conf:/etc/nginx/conf.d/default.conf
+      - .:/usr/share/nginx/html
+  location2:
+    image: nginx:alpine
+    ports:
+      - 8120:80
+    volumes:
+      - ./location2.conf:/etc/nginx/conf.d/default.conf
+      - .:/usr/share/nginx/html
+      
